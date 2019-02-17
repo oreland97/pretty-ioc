@@ -1,5 +1,8 @@
 package com.oreland.ioc.core;
 
+import com.oreland.ioc.core.postprocessor.PostProcessorHandler;
+import com.oreland.ioc.core.preprocessor.PreProcessorHandler;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
@@ -14,6 +17,7 @@ public class ComponentFactory {
     public Map<String, Object> inject(List<Class> definitions) {
 
         definitions.stream()
+                .map(c -> PreProcessorHandler.getInstance().invoke(c))
                 .flatMap(cl -> Stream.of(cl.getDeclaredConstructors()))
                 .forEach(this::injectByConstructor);
 
@@ -34,6 +38,7 @@ public class ComponentFactory {
     private void createComponent(Constructor constructor) {
         try {
             Object created = constructor.newInstance();
+            created = PostProcessorHandler.getInstance().invoke(created);
             components.put(created.getClass().getSimpleName(), created);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
@@ -43,6 +48,7 @@ public class ComponentFactory {
     private void createComponent(Constructor constructor, Object[] params) {
         try {
             Object created = constructor.newInstance(params);
+            created = PostProcessorHandler.getInstance().invoke(created);
             components.put(created.getClass().getSimpleName(), created);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
             e.printStackTrace();
