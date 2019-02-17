@@ -1,50 +1,52 @@
 package com.oreland.ioc.core;
 
-import com.oreland.ioc.core.exceptions.InjectionException;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 public class ComponentFactory {
 
     private Map<String, Object> components = new HashMap<>();
 
-    public Map<String, Object> inject(Map<String, Class> definitions) throws InvocationTargetException, InstantiationException, InjectionException, IllegalAccessException {
-        Collection<Class> classes = definitions.values();
-        for (Class cl : classes) {
-            for (Constructor constructor : cl.getDeclaredConstructors()) {
-                if (constructor.getAnnotation(Inject.class) != null) {
-                    injectByConstructor(constructor, definitions);
-                }
-            }
-        }
+    public Map<String, Object> inject(List<Class> definitions) {
+
+        definitions.stream()
+                .flatMap(cl -> Stream.of(cl.getDeclaredConstructors()))
+                .forEach(this::injectByConstructor);
 
         return this.components;
     }
 
-    public void injectByConstructor(Constructor constr, Map<String, Class> definitions) throws InjectionException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        List<Object> constrParams = new ArrayList<>();
-        for (Class paramType : constr.getParameterTypes()) {
-            Class def = definitions.get(paramType.getSimpleName());
-            if (def != null) {
-                try {
-                    constrParams.add(def.newInstance());
-                } catch (InstantiationException | IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-            }
+    private void injectByConstructor(Constructor constructor) {
+        Class[] parameterTypes = constructor.getParameterTypes();
+        if (parameterTypes.length == 0) {
+            createComponent(constructor);
+        } else {
+            createComponent(constructor, Stream.of(parameterTypes)
+                    .map(t -> components.get(t.getSimpleName())).toArray());
         }
-        if (constrParams.isEmpty()) throw new InjectionException("Can't inject using constructor");
-        if (constrParams.size() != constr.getParameterCount()) throw new InjectionException("You can't inject component without \"@Component\" annotation");
 
-        Object o = constr.newInstance(constrParams.toArray());
-        components.put(o.getClass().getSimpleName(), o);
     }
 
-    public void injectByField(List<Class> classes) {
+    private void createComponent(Constructor constructor) {
+        try {
+            Object created = constructor.newInstance();
+            components.put(created.getClass().getSimpleName(), created);
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
     }
 
-    public void injectByMathod(List<Class> classes) {
+    private void createComponent(Constructor constructor, Object[] params) {
+        try {
+            Object created = constructor.newInstance(params);
+            components.put(created.getClass().getSimpleName(), created);
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            e.printStackTrace();
+        }
     }
+
 }

@@ -1,16 +1,16 @@
 package com.oreland.ioc.test;
 
-import com.oreland.ioc.core.Component;
+import com.oreland.ioc.core.annotations.Component;
 
 @Component
 public class ThirdClass {
 
-    private Long id;
+    private String title = "I'm a Third class!";
 
     @Override
     public String toString() {
         return "ThirdClass{" +
-                "id=" + id +
+                "title='" + title + '\'' +
                 '}';
     }
 }

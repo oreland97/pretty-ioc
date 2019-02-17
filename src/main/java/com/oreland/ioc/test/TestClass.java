@@ -1,19 +1,20 @@
 package com.oreland.ioc.test;
 
-import com.oreland.ioc.core.Component;
+import com.oreland.ioc.core.annotations.Component;
 
 @Component
 public class TestClass {
 
-    private String first;
-    private String second;
-    private String third;
+    private NewClass newClass;
+
+    public TestClass(NewClass newClass) {
+        this.newClass = newClass;
+    }
 
     @Override
     public String toString() {
         return "TestClass{" +
-                "first='" + first + '\'' +
-                ", second='" + second + '\'' +
+                "newClass=" + newClass +
                 '}';
     }
 }
